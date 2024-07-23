@@ -305,6 +305,7 @@ def "pnpm lsu" [dependency] {
 }
 
 alias builtin-cd = cd
+alias builtin-cat = cat
 
 source ~/.cache/starship/init.nu
 source ~/.cache/zoxide/init.nu
@@ -312,14 +313,16 @@ source ~/.cache/zoxide/init.nu
 def cat [...args] {
   if (which bat | is-not-empty) {
     bat ...$args
+  } else {
+    builtin-cat ...$args
   }
 }
 
-def cd --env [...args] {
+def cd --env [directory] {
   if (which zoxide | is-not-empty) {
-    z ...$args
+    z $directory
   } else {
-    builtin-cd $args
+    builtin-cd $directory
   }
 }
 

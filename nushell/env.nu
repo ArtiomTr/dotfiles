@@ -10,7 +10,8 @@ let configPath = match (sys host | get name) {
 
 def "sirse config" [
     name?: cell-path;
-    value?: string;
+    value?: any;
+    --unset
 ] {
     let sirseConfig = if ($configPath | path exists) {
         open $configPath
@@ -24,6 +25,8 @@ def "sirse config" [
 
     if $name == null {
         return $sirseConfig
+    } else if $unset {
+        $sirseConfig | reject $name | save -f $configPath    
     } else if $value == null {
         return ($sirseConfig | get -i $name);
     } else {
@@ -95,8 +98,22 @@ def "sirse install-manager add" [
     package: string;
     --prompt
 ] {
-    if $prompt and ((which $package | is-not-empty) or not (sirse confirm $"Package ($package) is missing. Do you want to install it?")) {
+    if (sirse config (["packages", $package] | into cell-path)) != null {
         return;
+    }
+
+    if (which $package | is-not-empty) {
+        return;
+    }
+
+    if $prompt {
+        let promptResult = sirse confirm $"Package ($package) is missing. Do you want to install it?";
+
+        sirse config (["packages", $package] | into cell-path) $promptResult
+
+        if $promptResult == false {
+            return;
+        }
     }
 
     let info =  try {
@@ -132,6 +149,8 @@ def "sirse install-manager add" [
             }
         }
     }
+
+    print "Package successfully installed. You may need to restart your shell."
 }
 
 sirse install-manager add gum --prompt;
