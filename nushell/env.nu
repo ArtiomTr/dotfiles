@@ -1,6 +1,62 @@
-# To add entries to PATH (on Windows you might use Path), you can use the following pattern:
-# $env.PATH = ($env.PATH | split row (char esep) | prepend '/some/path')
-$env.EDITOR = (which codium | first | get path)
+
+let configPath = match (sys host | get name) {
+    "Windows" => $"($env.APPDATA)/sirse/config.toml",
+    $platform => {
+        error make {
+            msg: $"Platform ($platform) is not supported"
+        }
+    }
+}
+
+def "sirse config" [
+    name?: cell-path;
+    value?: string;
+] {
+    let sirseConfig = if ($configPath | path exists) {
+        open $configPath
+    } else {
+        mkdir $"($configPath | path dirname)"
+    
+        {} | save $configPath
+    
+        {}
+    }
+
+    if $name == null {
+        return $sirseConfig
+    } else if $value == null {
+        return ($sirseConfig | get -i $name);
+    } else {
+        $sirseConfig | upsert $name $value | save -f $configPath
+    }
+}
+
+def "sirse choose" [
+    options; 
+    prompt?: string;
+] {
+    let selectedLabel = if (which gum | is-empty) {
+        $options | get label | input list $prompt
+    } else {
+        if ($prompt != null) {
+            gum choose --header $prompt ...($options | get label)
+        } else {
+            gum choose ...($options | get label)
+        }
+    }
+
+    let item = $options | where label == $selectedLabel | first;
+
+    return $item.value
+}
+
+def "sirse pick-file" [] {
+    if (which gum | is-empty) {
+        return (input "Enter file path: ");
+    } else {
+        return (gum file --file);
+    }
+}
 
 def "sirse confirm" [prompt: string] {
     if (which gum | is-empty) {
@@ -79,6 +135,53 @@ def "sirse install-manager add" [
 }
 
 sirse install-manager add gum --prompt;
+
+if ((sirse config editor) == null) {
+    let possibleEditors = [{
+        value: "code",
+        label: "Visual Studio Code"
+    }, {
+        value: "codium",
+        label: "VSCodium"
+    }];
+
+    let installedEditors = $possibleEditors | each { |it| if (which $it.value | is-not-empty) { $it } };
+
+    if ($installedEditors | is-empty) {
+        print "No editors detected - please specify path to editor";
+
+        let editor = (sirse pick-file);
+
+        sirse config editor.path;
+    } else if (($installedEditors | length) == 1) {
+        let editor = $installedEditors | first;
+
+        print $"Selected ($editor.label) editor";
+
+        sirse config editor.program $editor.value
+    } else {
+        let editor = sirse choose ($possibleEditors | append { label: "Other...", value: "other" }) "Select your preferred editor";
+
+        if $editor == "other" {
+            let editor = (sirse pick-file);
+
+            sirse config editor.path $editor
+        } else {
+            sirse config editor.program $editor
+        }
+    }
+}
+
+# To add entries to PATH (on Windows you might use Path), you can use the following pattern:
+# $env.PATH = ($env.PATH | split row (char esep) | prepend '/some/path')
+$env.EDITOR = if ((sirse config editor.program) != null) {
+    let editor = (sirse config editor.program);
+
+    which $editor | first | get path
+} else {
+    sirse config editor.path
+}
+
 sirse install-manager add starship --prompt;
 sirse install-manager add zoxide --prompt;
 sirse install-manager add bat --prompt;
