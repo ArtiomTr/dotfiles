@@ -304,11 +304,35 @@ def "pnpm lsu" [dependency] {
   echo $readable;
 }
 
+alias builtin-cd = cd
+
 source ~/.cache/starship/init.nu
 source ~/.cache/zoxide/init.nu
 
-alias cat = bat
-alias cd = z
+def cat [...args] {
+  if (which bat | is-not-empty) {
+    bat ...$args
+  }
+}
+
+def cd --env [...args] {
+  if (which zoxide | is-not-empty) {
+    z ...$args
+  } else {
+    builtin-cd $args
+  }
+}
+
+if (which fnm | is-not-empty) {
+  let variables = fnm env --corepack-enabled --shell bash | lines | str replace "export " "" | str replace -a '"' '' | split column '=' | rename name value;
+
+  load-env ($variables | where name != "PATH" | reduce -f {} {|it, acc| $acc | upsert $it.name $it.value });
+
+  let fnmPath = $variables | where name == "PATH" | first | get value | str replace ":$PATH" "";
+
+  $env.PATH = ($env.PATH | split row (char esep) | prepend $fnmPath)
+}
+
 alias modulekill = rm -rf node_modules and rm -rf **/node_modules
 alias docker = wsl docker
 alias lzd = wsl /home/linuxbrew/.linuxbrew/bin/lazydocker
