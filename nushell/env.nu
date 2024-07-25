@@ -41,7 +41,9 @@ def "sirse update" [
 
     print $"Syncing updates on channel ($channel)"
 
-    git switch --detach $latestCommit out> $"($env.APPDATA)/sirse/update.log"
+    git fetch --all err+out>> $"($env.APPDATA)/sirse/update.log"
+
+    git switch --detach $latestCommit err+out>> $"($env.APPDATA)/sirse/update.log"
 
     sirse config update.commit $latestCommit
 
