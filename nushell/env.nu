@@ -8,6 +8,46 @@ let configPath = match (sys host | get name) {
     }
 }
 
+def "sirse update" [
+    --check;
+    --channel: string
+] {
+    cd $"($env.APPDATA)/sirse/repo"
+
+    if $channel != null {
+        sirse config update.channel $channel
+    }
+
+    mut channel = sirse config update.channel
+
+    if $channel == null {
+        $channel = main
+    }
+
+    let latestCommit = ( git ls-remote origin $channel | parse --regex '(^[a-f0-9]+)\s' | rename hash | first | get hash)
+
+    let lastUpdate = sirse config update.commit
+
+    if $lastUpdate == $latestCommit {
+        print "Nothing to update - already latest version."
+        return;
+    }
+
+    if $check {
+        if not (sirse confirm "New update available - do you want to install?") {
+            return;
+        }
+    }
+
+    print $"Syncing updates on channel ($channel)"
+
+    git switch --detach $latestCommit out> $"(APPDATA)/sirse/update.log"
+
+    sirse config update.commit $latestCommit
+
+    print "Successfully updated configuration! Please, restart your shell now"
+}
+
 def "sirse config" [
     name?: cell-path;
     value?: any;
@@ -196,9 +236,9 @@ if ((sirse config editor) == null) {
 $env.EDITOR = if ((sirse config editor.program) != null) {
     let editor = (sirse config editor.program);
 
-    which $editor | first | get path
+    which $editor | first | get path | str replace -a "\\" "/"
 } else {
-    sirse config editor.path
+    sirse config editor.path | str replace -a "\\" "/"
 }
 
 sirse install-manager add starship --prompt;
@@ -214,7 +254,7 @@ if (which starship | is-not-empty) {
 
 mkdir ~/.cache/zoxide
 if (which zoxide | is-not-empty) {
-    zoxide init nushell | str replace "cd" "builtin-cd" | save -f ~/.cache/zoxide/init.nu    
+    zoxide init nushell | str replace -a "cd" "builtin-cd" | save -f ~/.cache/zoxide/init.nu    
 } else {
     touch ~/.cache/zoxide/init.nu
 }

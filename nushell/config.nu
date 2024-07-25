@@ -342,7 +342,7 @@ alias lzd = wsl /home/linuxbrew/.linuxbrew/bin/lazydocker
 alias minikube = wsl minikube
 
 def "start-emulator" [] {
-  let options = (emulator -list-avds | split row "\r\n"| filter { |row| not ($row | str trim | is-empty) });
+  let options = (emulator -list-avds | split row "\r\n" | filter { |row| not ($row | str trim | is-empty) and $row !~ '^INFO\s+\|' });
 
   let picked = match ($options | length) {
     0 => {
@@ -351,7 +351,7 @@ def "start-emulator" [] {
       }
     },
     1 => ($options | first),
-    _ => (gum choose $options)
+    _ => (gum choose ...$options)
   }
 
   if ($picked | is-empty) {
