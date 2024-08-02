@@ -118,7 +118,8 @@ def "sirse install-manager get" [package: string] {
         { package: "gum", windows: { manager: "winget", package: "charmbracelet.gum" } },
         { package: "starship", windows: { manager: "winget", package: "starship" } },
         { package: "zoxide", windows: { manager: "winget", package: "ajeetdsouza.zoxide" } },
-        { package: "bat", windows: { manager: "winget", package: "sharkdp.bat" } }
+        { package: "bat", windows: { manager: "winget", package: "sharkdp.bat" } },
+        { package: "ripgrep", windows: { manager: "winget", package: "BurntSushi.ripgrep.MSVC" } }
     ];
 
     let infos = $packages | where package == $package;
