@@ -3,14 +3,7 @@ export def main [
     value?: any;
     --unset
 ] {
-    let configPath = match (sys host | get name) {
-        "Windows" => $"($env.APPDATA)/sirse/config.toml",
-        $platform => {
-            error make {
-                msg: $"Platform ($platform) is not supported"
-            }
-        }
-    }
+    let configPath = dir "config.toml";
 
     let sirseConfig = if ($configPath | path exists) {
         open $configPath
@@ -32,3 +25,20 @@ export def main [
         $sirseConfig | upsert $name $value | save -f $configPath
     }
 };
+
+export def dir [name?: string] {
+    let configDir = (match (sys host | get name) {
+        "Windows" => $"($env.APPDATA)\\sirse",
+        $platform => {
+            error make {
+                msg: $"Platform ($platform) is not supported"
+            }
+        }
+    });
+
+    if $name != null {
+        return ([$configDir, $name] | path join);
+    } else {
+        return $configDir;
+    }
+}

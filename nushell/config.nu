@@ -202,7 +202,9 @@ def "git remove-merged" [
 }
 
 def "git ma" [] {
-  git checkout (git remote show origin | split row "\n" | where {|x| $x =~ "HEAD"} | first | str trim | parse "HEAD branch: {branch}" | first | get branch)
+  let out = (sirse cache upsert $"git-main:($env.PWD)" { || { value: (git remote show origin | split row "\n" | where {|x| $x =~ "HEAD"} | first | str trim | parse "HEAD branch: {branch}" | first | get branch), expires: 7day } });
+
+  git checkout $out
 }
 
 def "git sta" [] {

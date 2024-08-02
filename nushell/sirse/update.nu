@@ -11,7 +11,7 @@ export def main [
     --check;
     --channel: string
 ] {
-    cd $"($env.APPDATA)/sirse/repo"
+    cd $"(config-manager dir repo)"
 
     if $channel != null {
         config-manager config update.channel $channel
@@ -23,7 +23,7 @@ export def main [
         $channel = main
     }
 
-    let latestCommit = ( git ls-remote origin $channel | parse --regex '(^[a-f0-9]+)\s' | rename hash | first | get hash)
+    let latestCommit = (git ls-remote origin $channel | parse --regex '(^[a-f0-9]+)\s' | rename hash | first | get hash)
 
     let lastUpdate = config-manager config update.commit
 
@@ -40,9 +40,9 @@ export def main [
 
     print $"Syncing updates on channel ($channel)"
 
-    git fetch --all err+out>> $"($env.APPDATA)/sirse/update.log"
+    git fetch --all err+out>> $"(config-manager dir update.log)"
 
-    git switch --detach $latestCommit err+out>> $"($env.APPDATA)/sirse/update.log"
+    git switch --detach $latestCommit err+out>> $"(config-manager dir update.log)"
 
     config-manager config update.commit $latestCommit
 
