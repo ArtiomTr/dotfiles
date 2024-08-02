@@ -1,5 +1,6 @@
 use sirse;
 
+sirse update auto;
 sirse install-manager add gum --prompt;
 
 if ((sirse config editor) == null) {

@@ -9,9 +9,9 @@ use ui.nu;
 
 export def main [
     --check;
-    --channel: string
+    --channel: string;
 ] {
-    cd $"(config-manager dir repo)"
+    cd (config-manager dir repo)
 
     if $channel != null {
         config-manager config update.channel $channel
@@ -25,17 +25,23 @@ export def main [
 
     let latestCommit = (git ls-remote origin $channel | parse --regex '(^[a-f0-9]+)\s' | rename hash | first | get hash)
 
-    let lastUpdate = config-manager config update.commit
+    mut lastUpdate = config-manager config update.commit
+
+    if $lastUpdate == null {
+        $lastUpdate = (git rev-parse HEAD | str trim)
+    }
+
+    if $check {
+        return ($lastUpdate != $latestCommit);
+    }
 
     if $lastUpdate == $latestCommit {
         print "Nothing to update - already latest version."
         return;
     }
 
-    if $check {
-        if not (ui confirm "New update available - do you want to install?") {
-            return;
-        }
+    if not (ui confirm "New update available - do you want to install?") {
+        return;
     }
 
     print $"Syncing updates on channel ($channel)"
@@ -49,4 +55,26 @@ export def main [
     print "Successfully updated configuration! Please, restart your shell now"
 }
 
-export def auto [] {}
+export def auto [] {
+    mut lastUpdate = (config-manager config update.lastCheck);
+
+    if $lastUpdate != null {
+        $lastUpdate = ($lastUpdate | into datetime);
+    }
+
+    let $updatePeriod = if (config-manager config update.checkPeriod) != null {
+        config-manager config update.checkPeriod | into duration
+    } else {
+        1day
+    }
+
+    if $lastUpdate != null and $lastUpdate + $updatePeriod > (date now) {
+        return;
+    }
+
+    if (main --check) {
+        main
+    }
+
+    config-manager config update.lastCheck (date now | format date)
+}
