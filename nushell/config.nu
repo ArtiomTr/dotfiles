@@ -306,6 +306,8 @@ def "pnpm lsu" [dependency] {
   echo $readable;
 }
 
+alias builtin-cd = cd
+
 source ~/.cache/starship/init.nu
 source ~/.cache/zoxide/init.nu
 source ~/.cache/sirse/aliases.nu
@@ -319,8 +321,6 @@ def cat [...args] {
     builtin-cat ...$args
   }
 }
-
-alias builtin-cd = cd
 
 def cd --env [directory] {
   if (which zoxide | is-not-empty) {
