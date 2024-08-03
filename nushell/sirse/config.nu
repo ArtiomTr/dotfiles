@@ -8,7 +8,7 @@ export def main [
     let sirseConfig = if ($configPath | path exists) {
         open $configPath
     } else {
-        mkdir $"($configPath | path dirname)"
+        mkdir ($configPath | path dirname)
 
         {} | save $configPath
 
@@ -29,6 +29,7 @@ export def main [
 export def dir [name?: string] {
     let configDir = (match (sys host | get name) {
         "Windows" => $"($env.APPDATA)\\sirse",
+        "Ubuntu" => $"($env.HOME)/.sirse",
         $platform => {
             error make {
                 msg: $"Platform ($platform) is not supported"

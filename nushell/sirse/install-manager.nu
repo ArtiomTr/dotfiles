@@ -10,11 +10,11 @@ export def main [] {}
 
 export def find-pkg [package: string] {
     let packages = [
-        { package: "gum", windows: { manager: "winget", package: "charmbracelet.gum" } },
-        { package: "starship", windows: { manager: "winget", package: "starship" } },
-        { package: "zoxide", windows: { manager: "winget", package: "ajeetdsouza.zoxide" } },
-        { package: "bat", windows: { manager: "winget", package: "sharkdp.bat" } },
-        { package: "ripgrep", windows: { manager: "winget", package: "BurntSushi.ripgrep.MSVC" } }
+        { package: "gum", windows: { manager: "winget", package: "charmbracelet.gum" }, debian: { manager: "brew", package: "gum" } },
+        { package: "starship", windows: { manager: "winget", package: "starship" }, debian: { manager: "brew", package: "starship" } },
+        { package: "zoxide", windows: { manager: "winget", package: "ajeetdsouza.zoxide" }, debian: { manager: "brew", package: "zoxide" } },
+        { package: "bat", windows: { manager: "winget", package: "sharkdp.bat" }, debian: { manager: "brew", package: "bat" } },
+        { package: "ripgrep", windows: { manager: "winget", package: "BurntSushi.ripgrep.MSVC" }, debian: { manager: "brew", package: "ripgrep" } }
     ];
 
     let infos = $packages | where package == $package;
@@ -68,8 +68,6 @@ export def add [
 
     match (sys host | get name) {
         "Windows" => {
-            print $info.windows.manager;
-
             match $info.windows.manager {
                 "winget" => {
                     winget install $info.windows.package
@@ -81,6 +79,18 @@ export def add [
                 }
             }
         },
+        "Ubuntu" => {
+            match $info.debian.manager {
+                "brew" => {
+                    brew install $info.debian.package
+                },
+                $manager => {
+                    error make {
+                        msg: $"Unknown manager $($manager) encountered."
+                    }
+                }
+            }
+        }
         $platform => {
             error make {
                 msg: $"Platform $($platform) is not supported"
