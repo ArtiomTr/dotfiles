@@ -5,6 +5,7 @@ module config-manager {
 }
 
 use config-manager;
+use ui.nu;
 
 export def main [] {}
 
@@ -45,7 +46,7 @@ export def add [
     }
 
     if $prompt {
-        let promptResult = sirse confirm $"Package ($package) is missing. Do you want to install it?";
+        let promptResult = ui confirm $"Package ($package) is missing. Do you want to install it?";
 
         config-manager config (["packages", $package] | into cell-path) $promptResult
 
