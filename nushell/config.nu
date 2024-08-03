@@ -306,11 +306,11 @@ def "pnpm lsu" [dependency] {
   echo $readable;
 }
 
-alias builtin-cd = cd
-alias builtin-cat = cat
-
 source ~/.cache/starship/init.nu
 source ~/.cache/zoxide/init.nu
+source ~/.cache/sirse/aliases.nu
+
+alias builtin-cat = cat
 
 def cat [...args] {
   if (which bat | is-not-empty) {
@@ -319,6 +319,8 @@ def cat [...args] {
     builtin-cat ...$args
   }
 }
+
+alias builtin-cd = cd
 
 def cd --env [directory] {
   if (which zoxide | is-not-empty) {
@@ -339,9 +341,6 @@ if (which fnm | is-not-empty) {
 }
 
 alias modulekill = rm -rf node_modules and rm -rf **/node_modules
-alias docker = wsl docker
-alias lzd = wsl /home/linuxbrew/.linuxbrew/bin/lazydocker
-alias minikube = wsl minikube
 
 def "start-emulator" [] {
   let options = (emulator -list-avds | split row "\r\n" | filter { |row| not ($row | str trim | is-empty) and $row !~ '^INFO\s+\|' });

@@ -66,3 +66,14 @@ if (which zoxide | is-not-empty) {
 } else {
     touch ~/.cache/zoxide/init.nu
 }
+
+mkdir ~/.cache/sirse
+if ((sys host).name == "Windows") {
+    [
+        "alias docker = wsl docker"
+        "alias lzd = wsl /home/linuxbrew/.linuxbrew/bin/lazydocker"
+        "alias minikube = wsl minikube"
+    ] | str join "\n" | save -f ~/.cache/sirse/aliases.nu
+} else {
+    touch ~/.cache/sirse/aliases.nu
+}
