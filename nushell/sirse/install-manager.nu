@@ -11,11 +11,11 @@ export def main [] {}
 
 export def find-pkg [package: string] {
     let packages = [
-        { package: "gum", windows: { manager: "winget", package: "charmbracelet.gum" }, debian: { manager: "brew", package: "gum" } },
-        { package: "starship", windows: { manager: "winget", package: "starship" }, debian: { manager: "brew", package: "starship" } },
-        { package: "zoxide", windows: { manager: "winget", package: "ajeetdsouza.zoxide" }, debian: { manager: "brew", package: "zoxide" } },
-        { package: "bat", windows: { manager: "winget", package: "sharkdp.bat" }, debian: { manager: "brew", package: "bat" } },
-        { package: "ripgrep", windows: { manager: "winget", package: "BurntSushi.ripgrep.MSVC" }, debian: { manager: "brew", package: "ripgrep" } }
+        { package: "gum", windows: { manager: "winget", package: "charmbracelet.gum" }, debian: { manager: "brew", package: "gum" }, darwin: { manager: "brew", package: "gum" } },
+        { package: "starship", windows: { manager: "winget", package: "starship" }, debian: { manager: "brew", package: "starship" }, darwin: { manager: "brew", package: "starship" } },
+        { package: "zoxide", windows: { manager: "winget", package: "ajeetdsouza.zoxide" }, debian: { manager: "brew", package: "zoxide" }, darwin: { manager: "brew", package: "zoxide" } },
+        { package: "bat", windows: { manager: "winget", package: "sharkdp.bat" }, debian: { manager: "brew", package: "bat" }, darwin: { manager: "brew", package: "bat" } },
+        { package: "ripgrep", windows: { manager: "winget", package: "BurntSushi.ripgrep.MSVC" }, debian: { manager: "brew", package: "ripgrep" }, darwin: { manager: "brew", package: "ripgrep" } }
     ];
 
     let infos = $packages | where package == $package;
@@ -84,6 +84,18 @@ export def add [
             match $info.debian.manager {
                 "brew" => {
                     brew install $info.debian.package
+                },
+                $manager => {
+                    error make {
+                        msg: $"Unknown manager $($manager) encountered."
+                    }
+                }
+            }
+        }
+        "Darwin" => {
+            match $info.darwin.manager {
+                "brew" => {
+                    brew install $info.darwin.package
                 },
                 $manager => {
                     error make {

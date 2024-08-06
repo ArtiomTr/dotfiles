@@ -30,6 +30,7 @@ export def dir [name?: string] {
     let configDir = (match (sys host | get name) {
         "Windows" => $"($env.APPDATA)\\sirse",
         "Ubuntu" => $"($env.HOME)/.sirse",
+        "Darwin" => $"($env.HOME)/.sirse",
         $platform => {
             error make {
                 msg: $"Platform ($platform) is not supported"
