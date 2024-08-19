@@ -342,7 +342,9 @@ if (which fnm | is-not-empty) {
 
 alias modulekill = rm -rf node_modules and rm -rf **/node_modules
 
-def "start-emulator" [] {
+def "start-emulator" [
+  --coldboot
+] {
   let options = (emulator -list-avds | split row "\r\n" | filter { |row| not ($row | str trim | is-empty) and $row !~ '^INFO\s+\|' });
 
   let picked = match ($options | length) {
@@ -360,7 +362,12 @@ def "start-emulator" [] {
       msg: "Emulator not selected."
     }
   } else {
-    emulator -avd $picked;
+
+    if $coldboot {
+      emulator -avd $picked -no-snapshot-load;
+    } else {
+      emulator -avd $picked;
+    }
   }
 }
 
