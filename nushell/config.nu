@@ -247,15 +247,18 @@ def "git yolo" [
   git push;
 }
 
-def "kill-port" [...ports] {
-  let processes = []
+def "kill-port" [
+  --yes(-y)
+  ...ports
+] {
+  mut processes = []
 
   for $port in $ports {
     let found = (netstat -nao | find $":($port)" | ansi strip)
 
     let records = ($found | each { |row| $row | str trim | parse -r '^(?<proto>\w+)\s+(?<local_address>\d+\.\d+\.\d+\.\d+:\d+)\s+(?<foreign_address>\d+\.\d+\.\d+\.\d+:\d+)\s+(?<status>\w+)\s+(?<pid>\d+)$' } | filter { |row| ($row | length) > 0 and ($row | first | get pid) != "0" } | each { |row| first } | uniq-by pid);
   
-    $processes | append $records
+    $processes = ($processes | append $records)
   }
 
   let portSpan = (metadata $ports).span;
@@ -265,19 +268,23 @@ def "kill-port" [...ports] {
       msg: "No active processes are currently utilizing these ports. Please ensure the correct port is specified or check if the intended process is running."
       label: {
         text: "Unused port."
-        start: $portSpan.start,
-        end: $portSpan.end,
+        span: $portSpan
       }
     }
   }
 
   if ($processes | length) == 1 {
     let pid = ($processes | first | get pid);
-    try { 
-      gum confirm $"Kill process ($pid)?";
+
+    if $yes {
       taskkill /F /PID $pid;
-    } catch {
-      print "Killing process cancelled"
+    } else {
+      try { 
+        gum confirm $"Kill process ($pid)?";
+        taskkill /F /PID $pid;
+      } catch {
+        print "Killing process cancelled"
+      }
     }
   } else {
     let options = ($processes | each { |row| $"($row.pid | fill -a left -w 5) (ansi grey)\(($row.proto) ($row.local_address)\)(ansi reset)" });
