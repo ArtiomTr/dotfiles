@@ -1,20 +1,39 @@
 export def choose [
     options; 
     prompt?: string;
+    --multiple;
 ] {
-    let selectedLabel = if (which gum | is-empty) {
-        $options | get label | input list $prompt
-    } else {
-        if ($prompt != null) {
-            gum choose --header $prompt ...($options | get label)
+    if $multiple {
+        let selectedValues = if (which gum | is-empty) {
+            $options | get label | input list --multi $prompt
         } else {
-            gum choose ...($options | get label)
+            if ($prompt != null) {
+                gum choose --no-limit --header $prompt ...($options | get label)
+            } else {
+                gum choose --no-limit ...($options | get label)
+            }
         }
+
+        let items = $selectedValues | lines | each { |it| $it | str trim } | each { |it| 
+            $options | filter { |t| $t.label == $it } | each { |t| $t.value }
+        } | flatten | uniq;
+
+        return $items;
+    } else {
+        let selectedLabel = if (which gum | is-empty) {
+            $options | get label | input list $prompt
+        } else {
+            if ($prompt != null) {
+                gum choose --header $prompt ...($options | get label)
+            } else {
+                gum choose ...($options | get label)
+            }
+        }
+
+        let item = $options | where label == $selectedLabel | first;
+
+        return $item.value
     }
-
-    let item = $options | where label == $selectedLabel | first;
-
-    return $item.value
 }
 
 export def pick-file [] {

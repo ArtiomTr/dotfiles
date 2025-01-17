@@ -288,7 +288,7 @@ def "kill-port" [
     }
   } else {
     let options = ($processes | each { |row| $"($row.pid | fill -a left -w 5) (ansi grey)\(($row.proto) ($row.local_address)\)(ansi reset)" });
-    let pickedOptions = (gum choose --no-limit --header "Multiple processes using port(-s) found. Pick some (space) or all (a) processes to kill and press enter" $options)
+    let pickedOptions = (gum choose --no-limit --header "Multiple processes using port(-s) found. Pick some (space) or all (a) processes to kill and press enter" ...$options)
 
     let pickedRows = ($pickedOptions | ansi strip | str trim | split row "\n" | filter { |row| not ($row | str trim | is-empty) });
 
@@ -303,6 +303,10 @@ def "kill-port" [
   }
 }
 
+def toast [message] {
+  pnpm --package node-notifier-cli dlx notify -t 'Alert' -m $message
+}
+
 def "pnpm lsu" [dependency] {
   let found = (pnpm ls --depth Infinity -r $dependency | find $dependency);
 
@@ -311,6 +315,14 @@ def "pnpm lsu" [dependency] {
   let readable = ($versions | rename version);
 
   echo $readable;
+}
+
+def "pnpm iup" [--filter: string] {
+  if $filter != null {
+    pnpm update --filter $filter --latest ...(sirse ui choose --multiple (pnpm outdated --filter $filter --json | from json | transpose key value | each { |it| { label: $"($it.key) (ansi grey)\(($it.value.current) -> ($it.value.latest)\)(ansi reset)", value: $it.key } }))
+  } else {
+    pnpm update --latest ...(sirse ui choose --multiple (pnpm outdated --json | from json | transpose key value | each { |it| { label: $"($it.key) (ansi grey)\(($it.value.current) -> ($it.value.latest)\)(ansi reset)", value: $it.key } }))
+  }
 }
 
 alias builtin-cd = cd
@@ -347,7 +359,14 @@ if (which fnm | is-not-empty) {
   $env.PATH = ($env.PATH | split row (char esep) | prepend $fnmPath)
 }
 
-alias modulekill = rm -rf node_modules and rm -rf **/node_modules
+def "modulekill" [] {
+  rm -rf node_modules;
+  rm -rf */node_modules;
+  rm -rf */*/node_modules;
+  rm -rf */*/*/node_modules;
+  rm -rf */*/*/*/node_modules;
+  rm -rf **/node_modules;
+}
 
 def "start-emulator" [
   --coldboot
